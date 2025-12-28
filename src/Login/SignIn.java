@@ -11,7 +11,7 @@ package Login;
 
 import Admin.MainAdmin;
 import config.Koneksi;
-import customer.MainUser;
+import customer.MainCustomer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -143,11 +143,11 @@ public class SignIn extends javax.swing.JPanel {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         
-        String user = username.getText();
+    String user = username.getText();
     String pass = password.getText();
 
     try {
-        String sql = "SELECT role FROM user WHERE username=? AND password=?";
+        String sql = "SELECT id_user, role FROM user WHERE username=? AND password=?";
         Connection conn = Koneksi.getKoneksi();
         PreparedStatement pst = conn.prepareStatement(sql);
 
@@ -157,6 +157,7 @@ public class SignIn extends javax.swing.JPanel {
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
+            int idUser = rs.getInt("id_user");
             String role = rs.getString("role");
 
             JOptionPane.showMessageDialog(this, "Login berhasil sebagai " + role);
@@ -164,7 +165,9 @@ public class SignIn extends javax.swing.JPanel {
             if (role.equals("admin")) {
                 new MainAdmin().setVisible(true);
             } else if (role.equals("pelanggan")) {
-                new MainUser().setVisible(true); // buat frame user
+                MainCustomer mainCustomer = new MainCustomer(); // SATU OBJEK
+                mainCustomer.setIdUserLogin(idUser);             // SET ID
+                mainCustomer.setVisible(true);   
             }
 
             mainFrame.dispose(); // tutup login
