@@ -9,17 +9,21 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
+import java.util.HashMap;
+import javax.swing.JOptionPane;
+
 
 /**
  *
  * @author lenovo
  */
 public class DataTujuan extends javax.swing.JPanel {
-
+    
     /**
      * Creates new form BookNow
      */
     
+    private HashMap<String, Integer> bandaraMap = new HashMap<>();
     private MainCustomer parent;
     
     public DataTujuan(MainCustomer parent) {
@@ -27,11 +31,11 @@ public class DataTujuan extends javax.swing.JPanel {
         initComponents();
         loadBandara();
     }
-
+    
     private void loadBandara() {
         try {
             Connection conn = Koneksi.getKoneksi();
-            String sql = "SELECT id_bandara, lokasi_bandara FROM bandara";
+            String sql = "SELECT id_bandara, nama_bandara FROM bandara";
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 
@@ -39,14 +43,12 @@ public class DataTujuan extends javax.swing.JPanel {
             landing.removeAllItems();
 
             while (rs.next()) {
-                String kota = rs.getString("lokasi_bandara");
-                takeOff.addItem(kota);
-                landing.addItem(kota);
+                bandaraMap.put(rs.getString("nama_bandara"), rs.getInt("id_bandara"));
+                takeOff.addItem(rs.getString("nama_bandara"));
+                landing.addItem(rs.getString("nama_bandara"));
             }
-
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Gagal mengambil data bandara");
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
     
@@ -176,23 +178,17 @@ public class DataTujuan extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        String asal = takeOff.getSelectedItem().toString();
-        String tujuan = landing.getSelectedItem().toString();
-        Date tanggal = date.getDate();
-
-        if (asal.equals(tujuan)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Asal dan tujuan tidak boleh sama");
+        if (date.getDate() == null) {
+            JOptionPane.showMessageDialog(this, "Tanggal belum dipilih");
             return;
         }
 
-        if (tanggal == null) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Pilih tanggal penerbangan");
-            return;
-        }
+        int asal = bandaraMap.get(takeOff.getSelectedItem().toString());
+        int tujuan = bandaraMap.get(landing.getSelectedItem().toString());
 
-        parent.setAsal(asal);
-        parent.setTujuan(tujuan);
-        parent.setTanggal(tanggal);
+        parent.setSearchData(asal, tujuan, date.getDate());
+        
+        parent.getPanelDataTersedia().loadData();
 
         parent.showPanel(parent.getPanelDataTersedia());
     }//GEN-LAST:event_jButton1ActionPerformed

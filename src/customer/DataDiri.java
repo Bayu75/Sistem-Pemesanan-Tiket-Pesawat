@@ -7,7 +7,8 @@ package customer;
 import config.Koneksi;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-
+import javax.swing.JOptionPane;
+import java.util.Date;
 
 /**
  *
@@ -26,38 +27,6 @@ public class DataDiri extends javax.swing.JPanel {
         initComponents();
     }
     
-    private boolean simpanDataPelanggan() {
-        if (firstName.getText().isEmpty() || lastName.getText().isEmpty() || email.getText().isEmpty() || no_hp.getText().isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Mohon lengkapi data diri");
-            return false;
-        }
-        
-        try {
-            Connection conn = Koneksi.getKoneksi();
-
-            String namaLengkap = firstName.getText().trim() + " " + lastName.getText().trim();
-
-            String sql = "INSERT INTO pelanggan (id_user, nama_lengkap, email, no_hp, alamat) "
-                       + "VALUES (?, ?, ?, ?, ?)";
-
-            PreparedStatement ps = conn.prepareStatement(sql);
-
-            ps.setInt(1, parent.getIdUserLogin()); // dari MainCustomer
-            ps.setString(2, namaLengkap);
-            ps.setString(3, email.getText());
-            ps.setString(4, no_hp.getText());
-            ps.setString(5, alamat.getText());
-
-            ps.executeUpdate();
-            return true;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            javax.swing.JOptionPane.showMessageDialog(this, "Gagal menyimpan data diri");
-            return false;
-        }
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -74,11 +43,11 @@ public class DataDiri extends javax.swing.JPanel {
         jLabel4 = new javax.swing.JLabel();
         lastName = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
-        email = new javax.swing.JTextField();
+        femail = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
         no_hp = new javax.swing.JTextField();
         jLabel11 = new javax.swing.JLabel();
-        alamat = new javax.swing.JTextField();
+        falamat = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 255, 255));
@@ -109,9 +78,9 @@ public class DataDiri extends javax.swing.JPanel {
         jLabel9.setForeground(new java.awt.Color(255, 255, 255));
         jLabel9.setText("Email");
 
-        email.addActionListener(new java.awt.event.ActionListener() {
+        femail.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                emailActionPerformed(evt);
+                femailActionPerformed(evt);
             }
         });
 
@@ -127,9 +96,9 @@ public class DataDiri extends javax.swing.JPanel {
         jLabel11.setForeground(new java.awt.Color(255, 255, 255));
         jLabel11.setText("Address");
 
-        alamat.addActionListener(new java.awt.event.ActionListener() {
+        falamat.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                alamatActionPerformed(evt);
+                falamatActionPerformed(evt);
             }
         });
 
@@ -151,12 +120,12 @@ public class DataDiri extends javax.swing.JPanel {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(114, 114, 114)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(alamat)
+                    .addComponent(falamat)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabel3)
                             .addComponent(jLabel9)
-                            .addComponent(email)
+                            .addComponent(femail)
                             .addComponent(jLabel11)
                             .addComponent(firstName, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 107, Short.MAX_VALUE)
@@ -179,7 +148,7 @@ public class DataDiri extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(femail, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -191,7 +160,7 @@ public class DataDiri extends javax.swing.JPanel {
                 .addGap(28, 28, 28)
                 .addComponent(jLabel11)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(alamat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(falamat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 64, Short.MAX_VALUE)
                 .addComponent(jButton1)
                 .addGap(25, 25, 25))
@@ -229,29 +198,38 @@ public class DataDiri extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_lastNameActionPerformed
 
-    private void emailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_emailActionPerformed
+    private void femailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_femailActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_emailActionPerformed
+    }//GEN-LAST:event_femailActionPerformed
 
     private void no_hpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_no_hpActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_no_hpActionPerformed
 
-    private void alamatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_alamatActionPerformed
+    private void falamatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_falamatActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_alamatActionPerformed
+    }//GEN-LAST:event_falamatActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        if (simpanDataPelanggan()) {
-            parent.showPanel(parent.getPanelDataTujuan());
+        String nama = firstName.getText().trim() + " " + lastName.getText().trim();
+        String email = femail.getText();
+        String hp = no_hp.getText();
+        String alamat = falamat.getText();
+
+        if (nama.isEmpty() || email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Data belum lengkap");
+            return;
         }
+
+        parent.setUserData(nama, email, hp, alamat);
+        parent.showPanel(parent.getPanelDataTujuan());
     }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField alamat;
-    private javax.swing.JTextField email;
+    private javax.swing.JTextField falamat;
+    private javax.swing.JTextField femail;
     private javax.swing.JTextField firstName;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;

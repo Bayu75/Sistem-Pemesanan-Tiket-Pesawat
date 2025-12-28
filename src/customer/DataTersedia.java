@@ -3,11 +3,15 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package customer;
+
 import config.Koneksi;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
 /**
  *
  * @author lenovo
@@ -19,121 +23,85 @@ public class DataTersedia extends javax.swing.JPanel {
      */
     
     private MainCustomer parent;
-    private int selectedIdTiket;
+    private int selectedIdTiket = -1;
     
     public DataTersedia(MainCustomer parent) {
         this.parent = parent;
         initComponents();
-        takeOff.addActionListener(e -> autoLoad());
-        landing.addActionListener(e -> autoLoad());
-        date.addPropertyChangeListener("date", e -> autoLoad());
-
-        loadTiket();
     }
     
-    private void loadBandara() {
+    
+    
+    public void loadData() {
+        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        model.setRowCount(0); // bersihkan tabel
+
         try {
             Connection conn = Koneksi.getKoneksi();
-            String sql = "SELECT lokasi_bandara FROM bandara";
-            PreparedStatement ps = conn.prepareStatement(sql);
+
+            PreparedStatement ps = conn.prepareStatement("""
+                SELECT
+                      t.id_tiket,
+                      j.id_jadwal,
+                      m.nama_maskapai,
+                      t.kelas,
+                      b1.nama_bandara AS asal,
+                      b2.nama_bandara AS tujuan,
+                      j.tanggal_berangkat,
+                      j.tanggal_tiba,
+                      j.waktu_berangkat,
+                      j.waktu_tiba,
+                      t.harga
+                  FROM tiket t
+                  JOIN jadwal j ON t.id_jadwal = j.id_jadwal
+                  JOIN rute r ON j.id_rute = r.id_rute
+                  JOIN bandara b1 ON r.id_bandara_asal = b1.id_bandara
+                  JOIN bandara b2 ON r.id_bandara_tujuan = b2.id_bandara
+                  JOIN pesawat p ON j.id_pesawat = p.id_pesawat
+                  JOIN maskapai m ON p.id_maskapai = m.id_maskapai
+                  WHERE r.id_bandara_asal = ?
+                    AND r.id_bandara_tujuan = ?
+                    AND j.tanggal_berangkat = ?
+                    AND t.status = 'Tersedia'
+            """);
+
+            ps.setInt(1, parent.getIdBandaraAsal());
+            ps.setInt(2, parent.getIdBandaraTujuan());
+            ps.setDate(3, new java.sql.Date(parent.getTanggalBerangkat().getTime()));
+
             ResultSet rs = ps.executeQuery();
 
-            takeOff.removeAllItems();
-            landing.removeAllItems();
+            boolean adaData = false;
 
             while (rs.next()) {
-                String kota = rs.getString("lokasi_bandara");
-                takeOff.addItem(kota);
-                landing.addItem(kota);
+                adaData = true;
+
+                model.addRow(new Object[] {
+                    rs.getInt("id_tiket"),
+                    rs.getString("nama_maskapai"),
+                    rs.getString("kelas"),
+                    rs.getString("asal"),
+                    rs.getString("tujuan"),
+                    rs.getDate("tanggal_berangkat"),
+                    rs.getDate("tanggal_tiba"),
+                    rs.getTime("waktu_berangkat"),
+                    rs.getTime("waktu_tiba"),
+                    rs.getInt("harga"),
+                    "Pilih"
+                });
             }
 
-        } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Gagal load data bandara");
-            e.printStackTrace();
-        }
-    }
-    
-    public void loadFromParent() {
-        // Ambil data dari MainCustomer
-        takeOff.setSelectedItem(parent.getAsal());
-        landing.setSelectedItem(parent.getTujuan());
-        date.setDate(parent.getTanggal());
-
-        loadTiket(); 
-    }
-    
-    private void loadTiket() {
-        try {
-            Connection conn = Koneksi.getKoneksi();
-
-            String sql = """
-                SELECT t.id_tiket, t.kelas, t.harga,
-                       j.tanggal_berangkat, j.waktu_berangkat, j.waktu_tiba,
-                       ba.nama_bandara AS asal,
-                       bt.nama_bandara AS tujuan,
-                       m.nama_maskapai
-                FROM tiket t
-                JOIN jadwal j ON t.id_jadwal = j.id_jadwal
-                JOIN rute r ON j.id_rute = r.id_rute
-                JOIN bandara ba ON r.id_bandara_asal = ba.id_bandara
-                JOIN bandara bt ON r.id_bandara_tujuan = bt.id_bandara
-                JOIN pesawat p ON j.id_pesawat = p.id_pesawat
-                JOIN maskapai m ON p.id_maskapai = m.id_maskapai
-                WHERE ba.nama_bandara = ?
-                  AND bt.nama_bandara = ?
-                  AND j.tanggal_berangkat = ?
-                  AND t.status = 'Tersedia'
-            """;
-
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, parent.getAsal());
-            ps.setString(2, parent.getTujuan());
-            ps.setDate(3, new java.sql.Date(parent.getTanggal().getTime()));
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                selectedIdTiket = rs.getInt("id_tiket");
-
-                maskapai.setText(rs.getString("nama_maskapai"));
-                kelas.setText(rs.getString("kelas"));
-
-                takeOff1.setText(rs.getString("asal"));
-                landing1.setText(rs.getString("tujuan"));
-
-                takeOffDate1.setText(rs.getString("tanggal_berangkat"));
-                landingDate1.setText(rs.getString("tanggal_berangkat"));
-
-                takeOffTime1.setText(rs.getString("waktu_berangkat"));
-                landingTime1.setText(rs.getString("waktu_tiba"));
-
-                harga1.setText("Rp " + rs.getInt("harga") + " /person");
-            } else {
-                maskapai.setText("Tidak ada tiket tersedia");
-                harga1.setText("-");
+            if (!adaData) {
+                JOptionPane.showMessageDialog(this, "Jadwal tidak ditemukan");
             }
 
+            rs.close();
+            ps.close();
+
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this,
-                "Gagal mengambil data tiket");
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal memuat jadwal");
         }
-    }
-    
-    private void autoLoad() {
-        if (takeOff.getSelectedItem() == null ||
-            landing.getSelectedItem() == null ||
-            date.getDate() == null) {
-            return;
-        }
-
-        if (takeOff.getSelectedItem()
-            .equals(landing.getSelectedItem())) {
-            return;
-        }
-
-        loadJadwal();
     }
     
     /**
@@ -146,332 +114,50 @@ public class DataTersedia extends javax.swing.JPanel {
     private void initComponents() {
 
         jLabel1 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
-        takeOff = new javax.swing.JComboBox<>();
-        landing = new javax.swing.JComboBox<>();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        date = new com.toedter.calendar.JDateChooser();
         jPanel2 = new javax.swing.JPanel();
-        jadwal = new javax.swing.JPanel();
-        maskapai = new javax.swing.JLabel();
-        kelas = new javax.swing.JLabel();
-        takeOff1 = new javax.swing.JLabel();
-        takeOffDate1 = new javax.swing.JLabel();
-        takeOffTime1 = new javax.swing.JLabel();
-        landing1 = new javax.swing.JLabel();
-        landingDate1 = new javax.swing.JLabel();
-        landingTime1 = new javax.swing.JLabel();
-        harga1 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
-        jLabel17 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        jLabel19 = new javax.swing.JLabel();
-        jLabel20 = new javax.swing.JLabel();
-        jLabel21 = new javax.swing.JLabel();
-        jLabel22 = new javax.swing.JLabel();
-        jLabel23 = new javax.swing.JLabel();
-        jLabel24 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
 
         setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel1.setText("Choose");
 
-        jPanel1.setBackground(new java.awt.Color(32, 173, 212));
-
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("Landing");
-
-        takeOff.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Bali", "Jakarta" }));
-
-        landing.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Jakarta", "Bali" }));
-
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setText("Take Off");
-
-        jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel8.setText("Take Off Date");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(173, 173, 173)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addComponent(takeOff, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(49, 49, 49)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(landing, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addGap(39, 39, 39)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel8)
-                    .addComponent(date, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel3))
-                        .addGap(6, 6, 6)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(takeOff, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(landing, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(date, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-
         jPanel2.setBackground(new java.awt.Color(32, 173, 212));
 
-        jadwal.setBackground(new java.awt.Color(130, 205, 252));
-        jadwal.addMouseListener(new java.awt.event.MouseAdapter() {
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "ID", "Maskapai", "Class", "Take Off", "Landing", "Flight Date", "Landing Date", "Flight Time", "Landing Time", "Price"
+            }
+        ));
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jadwalMouseClicked(evt);
+                jTable1MouseClicked(evt);
             }
         });
-
-        maskapai.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
-        maskapai.setText("LION AIR");
-
-        kelas.setText("Economy");
-
-        takeOff1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        takeOff1.setText("Bali");
-
-        takeOffDate1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        takeOffDate1.setText("Wed, 30 Sep 2022");
-
-        takeOffTime1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        takeOffTime1.setText("17.00");
-
-        landing1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        landing1.setText("Jakarta");
-
-        landingDate1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        landingDate1.setText("Wed, 30 Sep 2022");
-
-        landingTime1.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        landingTime1.setText("19.10");
-
-        harga1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        harga1.setText("Rp. 1.030.000 -/person");
-
-        jLabel13.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel13.setText("Direct");
-
-        javax.swing.GroupLayout jadwalLayout = new javax.swing.GroupLayout(jadwal);
-        jadwal.setLayout(jadwalLayout);
-        jadwalLayout.setHorizontalGroup(
-            jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jadwalLayout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(maskapai)
-                    .addComponent(kelas))
-                .addGap(109, 109, 109)
-                .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(takeOffDate1)
-                    .addGroup(jadwalLayout.createSequentialGroup()
-                        .addGap(33, 33, 33)
-                        .addComponent(takeOff1))
-                    .addGroup(jadwalLayout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(takeOffTime1)))
-                .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jadwalLayout.createSequentialGroup()
-                        .addGap(97, 97, 97)
-                        .addComponent(landingDate1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(harga1)
-                        .addGap(42, 42, 42))
-                    .addGroup(jadwalLayout.createSequentialGroup()
-                        .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jadwalLayout.createSequentialGroup()
-                                .addGap(30, 30, 30)
-                                .addComponent(jLabel13)
-                                .addGap(70, 70, 70)
-                                .addComponent(landingTime1))
-                            .addGroup(jadwalLayout.createSequentialGroup()
-                                .addGap(121, 121, 121)
-                                .addComponent(landing1)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
-        jadwalLayout.setVerticalGroup(
-            jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jadwalLayout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jadwalLayout.createSequentialGroup()
-                            .addGap(6, 6, 6)
-                            .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addGroup(jadwalLayout.createSequentialGroup()
-                                    .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(landingDate1)
-                                        .addComponent(harga1))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(landingTime1))
-                                .addGroup(jadwalLayout.createSequentialGroup()
-                                    .addGroup(jadwalLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(takeOff1)
-                                        .addComponent(landing1))
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(takeOffDate1)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(takeOffTime1)))
-                            .addContainerGap(35, Short.MAX_VALUE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jadwalLayout.createSequentialGroup()
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 62, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel13)
-                            .addGap(0, 19, Short.MAX_VALUE)))
-                    .addGroup(jadwalLayout.createSequentialGroup()
-                        .addComponent(maskapai)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(kelas)
-                        .addContainerGap())))
-        );
-
-        jPanel4.setBackground(new java.awt.Color(130, 205, 252));
-
-        jLabel15.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel15.setText("SINGAPORE AIRLINES");
-
-        jLabel16.setText("Bussines Class");
-
-        jLabel17.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel17.setText("Bali");
-
-        jLabel18.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel18.setText("Wed, 30 Sep 2022");
-
-        jLabel19.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel19.setText("10.00");
-
-        jLabel20.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel20.setText("Jakarta");
-
-        jLabel21.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel21.setText("Wed, 30 Sep 2022");
-
-        jLabel22.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel22.setText("12.10");
-
-        jLabel23.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel23.setText("Direct");
-
-        jLabel24.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel24.setText("Rp. 1.330.000 -/person");
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel15)
-                    .addComponent(jLabel16))
-                .addGap(41, 41, 41)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel18)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(33, 33, 33)
-                        .addComponent(jLabel17))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
-                        .addComponent(jLabel19)))
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(126, 126, 126)
-                        .addComponent(jLabel20))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addComponent(jLabel23)
-                        .addGap(70, 70, 70)
-                        .addComponent(jLabel22))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(97, 97, 97)
-                        .addComponent(jLabel21)))
-                .addGap(47, 47, 47)
-                .addComponent(jLabel24)
-                .addGap(72, 72, 72))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(jPanel4Layout.createSequentialGroup()
-                                        .addComponent(jLabel20)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabel21)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabel22))
-                                    .addGroup(jPanel4Layout.createSequentialGroup()
-                                        .addComponent(jLabel17)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabel18)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(jLabel19)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel23)))
-                        .addGap(0, 15, Short.MAX_VALUE))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addGap(20, 20, 20)
-                                .addComponent(jLabel24))
-                            .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(jLabel15)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel16)))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-        );
+        jScrollPane1.setViewportView(jTable1);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(21, 21, 21)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jadwal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 728, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(22, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 759, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addComponent(jadwal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(14, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(98, 98, 98))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -482,9 +168,7 @@ public class DataTersedia extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(15, 15, 15)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(360, 360, 360)
                         .addComponent(jLabel1)))
@@ -495,52 +179,56 @@ public class DataTersedia extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 350, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(20, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jadwalMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jadwalMouseClicked
+    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         // TODO add your handling code here:
-        parent.setIdTiketDipilih(selectedIdTiket);
+        int row = jTable1.getSelectedRow();
+        if (row < 0) return;
+        
+        selectedIdTiket = Integer.parseInt(
+            jTable1.getValueAt(row, 0).toString()
+        );
+
+        // ambil data dari tabel (sesuai urutan kolommu)
+        String maskapai = jTable1.getValueAt(row, 1).toString();
+        String kelas = jTable1.getValueAt(row, 2).toString();
+        String asal = jTable1.getValueAt(row, 3).toString();
+        String tujuan = jTable1.getValueAt(row, 4).toString();
+        Object tglBerangkat = jTable1.getValueAt(row, 5);
+        Object tglTiba = jTable1.getValueAt(row, 6);
+        Object jamBerangkat = jTable1.getValueAt(row, 7);
+        Object jamTiba = jTable1.getValueAt(row, 8);
+        int harga = Integer.parseInt(jTable1.getValueAt(row, 9).toString());
+        
+        // kirim ke DetailPesanan
+        DetailPesanan dp = parent.getPanelDetailPesanan();
+        
+        dp.setDataFromTable(
+            maskapai, kelas, asal, tujuan,
+            tglBerangkat, tglTiba,
+            jamBerangkat, jamTiba,
+            harga,
+            selectedIdTiket
+        );
+
         parent.showPanel(parent.getPanelDetailPesanan());
-    }//GEN-LAST:event_jadwalMouseClicked
+        dp.loadUserData();
+
+        parent.showPanel(dp);
+        
+        
+    }//GEN-LAST:event_jTable1MouseClicked
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private com.toedter.calendar.JDateChooser date;
-    private javax.swing.JLabel harga1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
-    private javax.swing.JLabel jLabel19;
-    private javax.swing.JLabel jLabel20;
-    private javax.swing.JLabel jLabel21;
-    private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jadwal;
-    private javax.swing.JLabel kelas;
-    private javax.swing.JComboBox<String> landing;
-    private javax.swing.JLabel landing1;
-    private javax.swing.JLabel landingDate1;
-    private javax.swing.JLabel landingTime1;
-    private javax.swing.JLabel maskapai;
-    private javax.swing.JComboBox<String> takeOff;
-    private javax.swing.JLabel takeOff1;
-    private javax.swing.JLabel takeOffDate1;
-    private javax.swing.JLabel takeOffTime1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }

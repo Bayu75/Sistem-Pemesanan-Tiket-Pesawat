@@ -3,6 +3,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 package customer;
+import config.Koneksi;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -15,12 +20,49 @@ public class DetailPesanan extends javax.swing.JPanel {
      */
     
     private MainCustomer parent;
+    private int idTiket;
+    private int idPelanggan;
+    
     
     public DetailPesanan(MainCustomer parent) {
         this.parent = parent;
         initComponents();
     }
+    
+    public void setDataFromTable(
+            String maskapai,
+            String kelas,
+            String asal,
+            String tujuan,
+            Object tglBerangkat,
+            Object tglTiba,
+            Object jamBerangkat,
+            Object jamTiba,
+            int harga,
+            int idTiket) {
 
+        this.idTiket = idTiket;
+        
+        this.maskapai.setText(maskapai);
+        this.kelas.setText(kelas);
+        this.takeOff.setText(asal);
+        this.landing.setText(tujuan);
+
+        this.takeOffDate.setText(tglBerangkat.toString());
+        this.landingDate.setText(tglTiba.toString());
+        this.takeOffTime.setText(jamBerangkat.toString());
+        this.landingTime.setText(jamTiba.toString());
+
+        this.harga.setText("Rp " + String.format("%,d", harga));
+    }
+    
+    public void loadUserData() {
+        nama.setText(parent.getNamaUser());
+        email.setText(parent.getEmailUser());
+        no_hp.setText(parent.getHpUser());
+        alamat.setText(parent.getAlamatUser());
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -117,59 +159,52 @@ public class DetailPesanan extends javax.swing.JPanel {
                     .addComponent(maskapai))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 80, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(takeOffDate)
-                        .addGap(30, 30, 30)
-                        .addComponent(jLabel15))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(38, 38, 38)
-                        .addComponent(takeOff))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(34, 34, 34)
-                        .addComponent(takeOffTime)))
-                .addGap(29, 29, 29)
+                    .addComponent(takeOffDate)
+                    .addComponent(takeOff)
+                    .addComponent(takeOffTime))
+                .addGap(40, 40, 40)
+                .addComponent(jLabel15)
+                .addGap(46, 46, 46)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(landing)
-                        .addGap(31, 31, 31))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addComponent(landingTime)
-                        .addGap(38, 38, 38))
-                    .addComponent(landingDate))
-                .addGap(82, 82, 82)
+                    .addComponent(landingDate)
+                    .addComponent(landing)
+                    .addComponent(landingTime))
+                .addGap(55, 55, 55)
                 .addComponent(harga)
                 .addGap(20, 20, 20))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap(11, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addComponent(harga)
-                        .addGap(21, 21, 21))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel2Layout.createSequentialGroup()
-                            .addComponent(maskapai)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(kelas))
+                        .addGap(27, 27, 27))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addComponent(takeOff)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel15)
+                                .addGap(22, 22, 22))
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addComponent(maskapai)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(kelas))
+                                .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addComponent(takeOff)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(takeOffDate)
-                                    .addComponent(jLabel15))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(takeOffTime))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(takeOffTime)))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(landing)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGap(44, 44, 44))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(landingDate)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(landingTime)))))
-                .addContainerGap())
+                                .addComponent(landingTime)))
+                        .addContainerGap())))
         );
 
         jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
@@ -294,14 +329,13 @@ public class DetailPesanan extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(369, 369, 369)
-                        .addComponent(jLabel1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(28, Short.MAX_VALUE))
+                .addGap(369, 369, 369)
+                .addComponent(jLabel1)
+                .addContainerGap(375, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(23, 23, 23))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -316,6 +350,104 @@ public class DetailPesanan extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
+        
+        
+        Connection conn = null;
+        
+        System.out.println("===== DEBUG ORDER =====");
+        System.out.println("ID USER     : " + parent.getIdUserLogin());
+        System.out.println("Nama        : " + nama.getText());
+        System.out.println("Email       : " + email.getText());
+        System.out.println("HP          : " + no_hp.getText());
+        System.out.println("Alamat      : " + alamat.getText());
+        System.out.println("ID Tiket    : " + idTiket);
+        System.out.println("=======================");
+
+        try {
+            conn = Koneksi.getKoneksi();
+            conn.setAutoCommit(false); // transaksi aman
+
+            // Insert/ ambil Id Pelanggan
+            String sqlPelanggan = """
+                INSERT INTO pelanggan (id_user, nama_lengkap, email, no_hp, alamat)
+                VALUES (?, ?, ?, ?, ?)
+            """;
+
+            PreparedStatement psPelanggan =
+                    conn.prepareStatement(sqlPelanggan, PreparedStatement.RETURN_GENERATED_KEYS);
+
+            psPelanggan.setInt(1, parent.getIdUserLogin()); // dari login
+            psPelanggan.setString(2, nama.getText());
+            psPelanggan.setString(3, email.getText());
+            psPelanggan.setString(4, no_hp.getText());
+            psPelanggan.setString(5, alamat.getText());
+
+            psPelanggan.executeUpdate();
+
+            ResultSet rsPelanggan = psPelanggan.getGeneratedKeys();
+            if (rsPelanggan.next()) {
+                idPelanggan = rsPelanggan.getInt(1);
+            }
+            
+            // Insert Pemesanan
+            String sqlPemesanan = """
+                INSERT INTO pemesanan
+                (id_pelanggan, id_tiket, tanggal_pemesanan, status_pemesanan)
+                VALUES (?, ?, NOW(), 'Menunggu')
+            """;
+
+            PreparedStatement psPemesanan =
+                    conn.prepareStatement(sqlPemesanan, PreparedStatement.RETURN_GENERATED_KEYS);
+
+            psPemesanan.setInt(1, idPelanggan);
+            psPemesanan.setInt(2, idTiket);
+
+            psPemesanan.executeUpdate();
+
+            ResultSet rsPemesanan = psPemesanan.getGeneratedKeys();
+            int idPemesanan = 0;
+            if (rsPemesanan.next()) {
+                idPemesanan = rsPemesanan.getInt(1);
+            }
+            
+            // Update status tiket
+            String sqlUpdateTiket =
+                    "UPDATE tiket SET status = 'Dipesan' WHERE id_tiket = ?";
+
+            PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateTiket);
+            psUpdate.setInt(1, idTiket);
+            psUpdate.executeUpdate();
+
+            conn.commit();
+
+            JOptionPane.showMessageDialog(this, "Pemesanan berhasil!");
+            
+            // Pindah ke Pembayaran
+            Pembayaran pb = parent.getPanelPembayaran();
+            pb.setDataFromPemesanan(
+                maskapai.getText(),
+                kelas.getText(),
+                takeOff.getText(),
+                landing.getText(),
+                takeOffDate.getText(),
+                takeOffTime.getText(),
+                landingDate.getText(),
+                landingTime.getText(),
+                harga.getText(),
+                idPemesanan
+            );
+
+            parent.showPanel(pb);
+
+        } catch (Exception e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Gagal menyimpan pemesanan");
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
 

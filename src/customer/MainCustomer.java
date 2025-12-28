@@ -4,6 +4,8 @@
  */
 package customer;
 
+import java.util.HashMap;
+import javax.swing.JOptionPane;
 import java.util.Date;
 import javax.swing.JPanel;
 
@@ -19,28 +21,33 @@ public class MainCustomer extends javax.swing.JFrame {
      * Creates new form MainUser
      */
     
+    JPanel panelHome;
     DataDiri panelDataDiri;
     DataTujuan panelDataTujuan;
     DataTersedia panelDataTersedia;
     DetailPesanan panelDetailPesanan;
+    Pembayaran panelPembayaran;
     
     public MainCustomer() {
         initComponents();
-        isi.setLayout(new java.awt.BorderLayout());
-        
+        isi.setLayout(new java.awt.BorderLayout());        
         panelDataDiri = new DataDiri(this);
         panelDataTujuan = new DataTujuan(this);
         panelDataTersedia = new DataTersedia(this);
         panelDetailPesanan = new DetailPesanan(this);
+        panelPembayaran = new Pembayaran(this);
+    }
+    
+    public void showHome() {
+        isi.removeAll();
+        initComponents();
+        pack();
+        setLocationRelativeTo(null);
     }
     
     public void showPanel(JPanel panel) {
-        isi.removeAll();
-        
-        if (panel instanceof DataTersedia) {
-            ((DataTersedia) panel).loadFromParent();
-        }
-        
+        isi.removeAll();      
+        isi.setLayout(new java.awt.BorderLayout());
         isi.add(panel, java.awt.BorderLayout.CENTER);
         isi.revalidate();
         isi.repaint();
@@ -50,6 +57,7 @@ public class MainCustomer extends javax.swing.JFrame {
     public DataTujuan getPanelDataTujuan() { return panelDataTujuan; }
     public DataTersedia getPanelDataTersedia() { return panelDataTersedia; }
     public DetailPesanan getPanelDetailPesanan() { return panelDetailPesanan; }
+    public Pembayaran getPanelPembayaran() { return panelPembayaran; }
     
 //  Untuk kebutuhan DataDiri
     private int idUserLogin;
@@ -62,29 +70,50 @@ public class MainCustomer extends javax.swing.JFrame {
         this.idUserLogin = idUserLogin;
     }
     
-//  untuk DataTujuan
-    private String asal;
-    private String tujuan;
-    private Date tanggal;
+    // Untuk pencarian jadwal
+    private int idBandaraAsal;
+    private int idBandaraTujuan;
+    private Date tanggalBerangkat;
 
-    private int idTiketDipilih;
+    public int getIdBandaraAsal() { return idBandaraAsal; }
+    public int getIdBandaraTujuan() { return idBandaraTujuan; }
+    public Date getTanggalBerangkat() { return tanggalBerangkat; }
 
-    public void setIdTiketDipilih(int id) {
-        this.idTiketDipilih = id;
-    }
-
-    public int getIdTiketDipilih() {
-        return idTiketDipilih;
+    public void setSearchData(int asal, int tujuan, Date tanggal) {
+        this.idBandaraAsal = asal;
+        this.idBandaraTujuan = tujuan;
+        this.tanggalBerangkat = tanggal;
     }
     
-    public void setAsal(String asal) { this.asal = asal; }
-    public void setTujuan(String tujuan) { this.tujuan = tujuan; }
-    public void setTanggal(Date tanggal) { this.tanggal = tanggal; }
+    // Untuk tiket yang dipilih
+    private int selectedTiket;
 
-    public String getAsal() { return asal; }
-    public String getTujuan() { return tujuan; }
-    public Date getTanggal() { return tanggal; }
+    public void setSelectedTiket(int idTiket) {
+        this.selectedTiket = idTiket;
+    }
 
+    public int getSelectedTiket() {
+        return selectedTiket;
+    }
+    
+    // ===== DATA DIRI USER =====
+    private String namaUser;
+    private String emailUser;
+    private String hpUser;
+    private String alamatUser;
+
+    public void setUserData(String nama, String email, String hp, String alamat) {
+        this.namaUser = nama;
+        this.emailUser = email;
+        this.hpUser = hp;
+        this.alamatUser = alamat;
+    }
+
+    public String getNamaUser() { return namaUser; }
+    public String getEmailUser() { return emailUser; }
+    public String getHpUser() { return hpUser; }
+    public String getAlamatUser() { return alamatUser; }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -191,7 +220,7 @@ public class MainCustomer extends javax.swing.JFrame {
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jButton7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 161, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 152, Short.MAX_VALUE)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(bookNow)
                     .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -221,21 +250,21 @@ public class MainCustomer extends javax.swing.JFrame {
             .addGroup(isiLayout.createSequentialGroup()
                 .addGroup(isiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(isiLayout.createSequentialGroup()
-                        .addGap(144, 144, 144)
-                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(isiLayout.createSequentialGroup()
                         .addGap(306, 306, 306)
-                        .addComponent(jLabel5)))
-                .addContainerGap(152, Short.MAX_VALUE))
+                        .addComponent(jLabel5))
+                    .addGroup(isiLayout.createSequentialGroup()
+                        .addGap(151, 151, 151)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(154, Short.MAX_VALUE))
         );
         isiLayout.setVerticalGroup(
             isiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, isiLayout.createSequentialGroup()
                 .addContainerGap(19, Short.MAX_VALUE)
                 .addComponent(jLabel5)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(88, 88, 88))
+                .addGap(94, 94, 94))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
